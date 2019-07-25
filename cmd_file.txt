@@ -1,0 +1,229 @@
+ip route 0.0.0.0 0.0.0.0 75.1.1.1
+!
+ip route 101.1.1.161 255.255.255.255 75.1.1.1
+!
+vrf definition 1_VN3
+rd 1:4104
+!
+address-family ipv4
+route-target export 1:4104
+route-target import 1:4104
+exit-address-family
+!
+address-family ipv6
+route-target export 1:4104
+route-target import 1:4104
+exit-address-family
+!
+ip dhcp relay information option
+!
+ip dhcp snooping vlan 20
+ip dhcp snooping
+ipv6 unicast-routing
+ipv6 mld snooping
+ipv6 multicast-routing
+mpls label mode all-vrfs protocol all-afs per-vrf
+device-tracking tracking
+!
+device-tracking policy IPDT_MAX_10
+limit address-count 10
+no protocol udp
+tracking enable
+!
+access-session mac-move deny
+!
+vlan configuration 20
+ipv6 nd raguard
+ipv6 dhcp guard
+!
+vlan 20
+name 190_1_12_0-1_VN3
+!
+interface LISP0
+!
+interface LISP0.4097
+!
+interface LISP0.4104
+!
+interface ra GigabitEthernet1/0/1-48
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra GigabitEthernet1/1/1-4
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra TenGigabitEthernet1/1/1-8
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra FortyGigabitEthernet1/1/1-2
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra TwentyFiveGigE1/1/1-2
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra GigabitEthernet3/0/2-47
+device-tracking attach-policy IPDT_MAX_10
+!
+interface GigabitEthernet3/0/48
+switchport mode trunk
+!
+interface ra GigabitEthernet3/1/1-4
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra TenGigabitEthernet3/1/1-8
+device-tracking attach-policy IPDT_MAX_10
+!
+interface ra FortyGigabitEthernet3/1/1-2
+device-tracking attach-policy IPDT_MAX_10
+!
+!
+interface ra TwentyFiveGigE3/1/1-2
+device-tracking attach-policy IPDT_MAX_10
+!
+router lisp
+locator-table default
+locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+IPv4-interface Loopback0 priority 10 weight 10
+auto-discover-rlocs
+exit-locator-set
+!
+service ipv4
+encapsulation vxlan
+itr map-resolver 101.1.1.161
+itr map-resolver 101.1.1.162
+etr map-server 101.1.1.161 key 7 15450A0A062978
+etr map-server 101.1.1.161 proxy-reply
+etr map-server 101.1.1.162 key 7 055C0709234F1D
+etr map-server 101.1.1.162 proxy-reply
+etr
+sgt
+no map-cache away-eids send-map-request
+use-petr 101.1.1.161
+use-petr 101.1.1.162
+proxy-itr 77.1.1.17
+exit-service-ipv4
+!
+service ipv6
+encapsulation vxlan
+itr map-resolver 101.1.1.161
+itr map-resolver 101.1.1.162
+etr map-server 101.1.1.161 key 7 00531200065858
+etr map-server 101.1.1.161 proxy-reply
+etr map-server 101.1.1.162 key 7 13521614090F57
+etr map-server 101.1.1.162 proxy-reply
+etr
+sgt
+no map-cache away-eids send-map-request
+use-petr 101.1.1.161
+use-petr 101.1.1.162
+proxy-itr 77.1.1.17
+exit-service-ipv6
+!
+service ethernet
+database-mapping limit dynamic 5000
+itr map-resolver 101.1.1.161
+itr map-resolver 101.1.1.162
+itr
+etr map-server 101.1.1.161 key 7 13521614090F57
+etr map-server 101.1.1.161 proxy-reply
+etr map-server 101.1.1.162 key 7 01440702590855
+etr map-server 101.1.1.162 proxy-reply
+etr
+exit-service-ethernet
+!
+instance-id 4104
+remote-rloc-probe on-route-change
+dynamic-eid 190_1_12_0-1_VN3-IPV4
+database-mapping 190.1.12.0/24 locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+exit-dynamic-eid
+!
+dynamic-eid 190_1_12_0-1_VN3-IPV6
+database-mapping 2004:420:30A:2D06::/64 locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+exit-dynamic-eid
+!
+service ipv4
+eid-table vrf 1_VN3
+map-cache 0.0.0.0/0 map-request
+route-import map-cache bgp 65201 route-map permit-all-eids
+route-import database bgp 65201 route-map deny-all-eids locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+exit-service-ipv4
+!
+service ipv6
+eid-table vrf 1_VN3
+map-cache ::/0 map-request
+route-import map-cache bgp 65201 route-map permit-all-eids-ipv6
+route-import database bgp 65201 route-map deny-all-eids-ipv6 locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+exit-service-ipv6
+!
+exit-instance-id
+!
+instance-id 8193
+remote-rloc-probe on-route-change
+service ethernet
+eid-table vlan 20
+database-mapping mac locator-set rloc_85f7cc2d-7460-4fc8-b3de-d56403e5b9a1
+exit-service-ethernet
+!
+exit-instance-id
+!
+ipv4 locator reachability exclude-default
+ipv4 source-locator Loopback0
+ipv6 locator reachability exclude-default
+ipv6 source-locator Loopback0
+exit-router-lisp
+!
+ip community-list 1 permit 655370
+ip community-list 2 permit 655371
+route-map tag_local_eids_ipv6 permit 5
+set community 655370
+!
+route-map tag_local_eids permit 5
+set community 655370
+!
+route-map deny-all-eids-ipv6 deny 15
+match community 1
+!
+route-map deny-all-eids-ipv6 deny 20
+match community 2
+!
+route-map deny-all-eids-ipv6 deny 25
+match ipv6 address prefix-list deny_0
+!
+route-map deny-all-eids-ipv6 permit 30
+!
+route-map permit-all-eids-ipv6 permit 15
+match community 1
+!
+route-map permit-all-eids-ipv6 permit 20
+match community 2
+!
+route-map permit-all-eids-ipv6 deny 25
+match ipv6 address prefix-list deny_0
+!
+route-map permit-all-eids-ipv6 deny 30
+!
+route-map deny-all-eids deny 15
+match community 1
+!
+route-map deny-all-eids deny 20
+match community 2
+!
+route-map deny-all-eids deny 25
+match ip address prefix-list deny_0.0.0.0
+!
+route-map deny-all-eids permit 30
+!
+route-map permit-all-eids permit 15
+match community 1
+!
+route-map permit-all-eids permit 20
+match community 2
+!
+route-map permit-all-eids deny 25
+match ip address prefix-list deny_0.0.0.0
+!
+route-map permit-all-eids deny 30
+!
+ip prefix-list deny_0.0.0.0 seq 10 permit 0.0.0.0/0
+ip radius source-interface Loopback0
+!
+ipv6 prefix-list deny_0 seq 10 permit ::/0
