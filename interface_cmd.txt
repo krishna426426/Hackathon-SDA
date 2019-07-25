@@ -1,0 +1,22 @@
+description Fabric_Migration
+mac-address 0000.0c9f.f461
+vrf forwarding 1_VN3
+ip address 190.1.12.1 255.255.255.0
+ip helper-address global 20.20.1.2
+no ip redirects
+ip ospf 241 area 0
+ip pim sparse-mode
+ip route-cache same-interface
+ip igmp version 3
+no lisp mobility liveness test
+lisp mobility 190_1_12_0-1_VN3-IPV4
+lisp mobility 190_1_12_0-1_VN3-IPV6
+ipv6 address 2004:420:30A:2D06::1/64
+ipv6 nd prefix 2004:420:30A:2D06::/64 2592000 604800 no-autoconfig
+ipv6 nd managed-config-flag
+ipv6 nd other-config-flag
+ipv6 nd router-preference High
+ipv6 dhcp relay destination 2004:420:30A:4D01::2
+ipv6 dhcp relay source-interface Vlan10
+ipv6 dhcp relay trust
+ipv6 ospf 241 area 0
